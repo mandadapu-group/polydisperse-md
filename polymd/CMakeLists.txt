@@ -1,4 +1,4 @@
-set(COMPONENT_NAME md_plugin)
+set(COMPONENT_NAME polymd)
 
 
 
