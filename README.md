@@ -1,5 +1,5 @@
 # PolydisperseMD
-A plug-in for HOOMD-Blue, a particle simulation toolkit, that implements soft continuous-polydisperse particles for molecular dynamics on the CPUs and GPUs.
+A plug-in for HOOMD-Blue, a particle simulation toolkit, that implements soft continuous-polydisperse particles for molecular dynamics on the CPUs and GPUs. It essentially implements customized plugins that works directly with HOOMD's molecular dynamics module and integrator. 
 
 Files that come in this template:
  - CMakeLists.txt   : main CMake configuration file for the plugin
