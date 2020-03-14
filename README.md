@@ -85,12 +85,33 @@ for the plugins.
 ---
 
 
-## **How to Use PolydisperseMD**
+## **Using PolydisperseMD with HOOMD's MD**
 
-The plugin is a complement for HOOMD's MD, which means that you need to import the plugin and hoomd.md side-by-side. 
+The plugin is a complement for HOOMD's MD, which means that you need to import the plugin and hoomd.md side-by-side. Everything you do will be just like running HOOMD's MD except at the part where you're defining pair potentials. For example (this script is taken from HOOMD-Blue's docs directly), 
 
+```python
+import hoomd
+from hoomd import md
+from hoomd import polymd # this is our plugin!
+hoomd.context.initialize()
+
+# Create a 10x10x10 simple cubic lattice of particles with type name A
+hoomd.init.create_lattice(unitcell=hoomd.lattice.sc(a=2.0, type_name='A'), n=10)
+
+# Specify Lennard-Jones interactions between particle pairs
+# We will use polymd for this
+nl = md.nlist.cell()
+lj = polymd.pair.lj_plugin(r_cut=2.5, nlist=nl)
+lj.pair_coeff.set('A', 'A', epsilon=1.0, sigma=1.0)
+
+# Integrate at constant temperature
+md.integrate.mode_standard(dt=0.005)
+hoomd.md.integrate.langevin(group=hoomd.group.all(), kT=1.2, seed=4)
+
+# Run for 10,000 time steps
+hoomd.run(10e3)
 (More Instructions, coming soon . . .)
-
+```
 ## **Developer Notes**
 
 (More notes, coming soon . . .)
