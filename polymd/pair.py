@@ -34,7 +34,7 @@ import math;
 import sys;
 
 #from collections import OrderedDict
-from hoomd.md_plugin import _md_plugin  
+from hoomd.polymd import _polymd
 from hoomd.md import _md
 from hoomd import _hoomd
 import hoomd.md.pair as md_pair
@@ -92,12 +92,12 @@ class lj_plugin(md_pair.pair):
 
         # create the c++ mirror class
         if not hoomd.context.exec_conf.isCUDAEnabled():
-            self.cpp_force = _md_plugin.PotentialPairLJPlugin(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-            self.cpp_class = _md_plugin.PotentialPairLJPlugin;
+            self.cpp_force = _polymd.PotentialPairLJPlugin(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+            self.cpp_class = _polymd.PotentialPairLJPlugin;
         else:
             self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
-            self.cpp_force = _md_plugin.PotentialPairLJPluginGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-            self.cpp_class = _md_plugin.PotentialPairLJPluginGPU;
+            self.cpp_force = _polymd.PotentialPairLJPluginGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+            self.cpp_class = _polymd.PotentialPairLJPluginGPU;
 
         hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
 
@@ -171,12 +171,12 @@ class force_shifted_lj_plugin(md_pair.pair):
 
         # create the c++ mirror class
         if not hoomd.context.exec_conf.isCUDAEnabled():
-            self.cpp_force = _md_plugin.PotentialPairForceShiftedLJPlugin(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-            self.cpp_class = _md_plugin.PotentialPairForceShiftedLJPlugin;
+            self.cpp_force = _polymd.PotentialPairForceShiftedLJPlugin(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+            self.cpp_class = _polymd.PotentialPairForceShiftedLJPlugin;
         else:
             self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
-            self.cpp_force = _md_plugin.PotentialPairForceShiftedLJPluginGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-            self.cpp_class = _md_plugin.PotentialPairForceShiftedLJPluginGPU;
+            self.cpp_force = _polymd.PotentialPairForceShiftedLJPluginGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+            self.cpp_class = _polymd.PotentialPairForceShiftedLJPluginGPU;
 
         hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
 
@@ -251,28 +251,28 @@ class polydisperse(md_pair.pair):
         # create the c++ mirror class
         if (model == "polydisperse12"):
             if not hoomd.context.exec_conf.isCUDAEnabled():
-                self.cpp_force = _md_plugin.PotentialPairPolydisperse(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperse;
+                self.cpp_force = _polymd.PotentialPairPolydisperse(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperse;
             else:
                 self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
-                self.cpp_force = _md_plugin.PotentialPairPolydisperseGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperseGPU;
+                self.cpp_force = _polymd.PotentialPairPolydisperseGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperseGPU;
         elif (model == "lennardjones"):
             if not hoomd.context.exec_conf.isCUDAEnabled():
-                self.cpp_force = _md_plugin.PotentialPairPolydisperseLJ(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperseLJ;
+                self.cpp_force = _polymd.PotentialPairPolydisperseLJ(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperseLJ;
             else:
                 self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
-                self.cpp_force = _md_plugin.PotentialPairPolydisperseLJGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperseLJGPU;
+                self.cpp_force = _polymd.PotentialPairPolydisperseLJGPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperseLJGPU;
         elif (model == "polydisperse18"):
             if not hoomd.context.exec_conf.isCUDAEnabled():
-                self.cpp_force = _md_plugin.PotentialPairPolydisperse18(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperse18;
+                self.cpp_force = _polymd.PotentialPairPolydisperse18(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperse18;
             else:
                 self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
-                self.cpp_force = _md_plugin.PotentialPairPolydisperse18GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
-                self.cpp_class = _md_plugin.PotentialPairPolydisperse18GPU;
+                self.cpp_force = _polymd.PotentialPairPolydisperse18GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperse18GPU;
         hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
 
         # setup the coefficient options

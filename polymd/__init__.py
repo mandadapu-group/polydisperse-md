@@ -12,7 +12,7 @@ existing job scripts that follow *documented* interfaces for functions and class
 will not require any modifications. **Maintainer:** Joshua A. Anderson
 """
 
-from hoomd.md_plugin import pair
+from hoomd.polymd import pair
 #from hoomd.md import angle
 #from hoomd.md import bond
 #from hoomd.md import charge

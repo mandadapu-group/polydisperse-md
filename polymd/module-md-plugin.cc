@@ -18,7 +18,7 @@ namespace py = pybind11;
 /*! each class setup their own python exports in a function export_ClassName
     create the hoomd python module and define the exports here.
 */
-PYBIND11_MODULE(_md_plugin, m)
+PYBIND11_MODULE(_polymd, m)
     {
     export_PotentialPair<PotentialPairLJPlugin>(m, "PotentialPairLJPlugin");
     export_PotentialPair<PotentialPairForceShiftedLJPlugin>(m, "PotentialPairForceShiftedLJPlugin");
