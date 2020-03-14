@@ -81,9 +81,7 @@ $ cmake ../ -DHOOMD_PLUGINS_DIR=${HOOMD_PLUGINS_DIR}
 
 Now, 'make install' will install the plugins into ${HOOMD_PLUGINS_DIR} and hoomd, when launched, will look there
 for the plugins.
-
 ---
-
 
 ## **Using PolydisperseMD with HOOMD's MD**
 
@@ -112,6 +110,7 @@ hoomd.md.integrate.langevin(group=hoomd.group.all(), kT=1.2, seed=4)
 hoomd.run(10e3)
 (More Instructions, coming soon . . .)
 ```
+
 ## **Developer Notes**
 
 (More notes, coming soon . . .)
