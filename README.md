@@ -2,7 +2,7 @@
 
 PolydisperseMD is a plug-in for HOOMD-Blue, a particle simulation toolkit, that implements specialized pair potentials for poly-disperse interacting particle system. The code is largely based on HOOMD-Blue's [MD's pair potentials](https://hoomd-blue.readthedocs.io/en/stable/module-md-pair.html).
 
-The plugin is currently under *beta* stage.  
+The plugin is currently under *beta* stage. For now, this file will be a temporary documentation for the plugin. 
 
 ## **Contents** 
 
