@@ -109,8 +109,9 @@ hoomd.md.integrate.langevin(group=hoomd.group.all(), kT=1.2, seed=4)
 
 # Run for 10,000 time steps
 hoomd.run(10e3)
-(More Instructions, coming soon . . .)
 ```
+
+(More Instructions, coming soon . . .)
 
 ## **Developer Notes**
 
