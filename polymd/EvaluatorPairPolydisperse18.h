@@ -171,6 +171,10 @@ class EvaluatorPairPolydisperse18
             {
             return std::string("polydisperse18");
             }
+        std::string getShapeSpec() const
+            {
+            throw std::runtime_error("Shape definition not supported for this pair potential.");
+            }
         #endif
 
     protected:
