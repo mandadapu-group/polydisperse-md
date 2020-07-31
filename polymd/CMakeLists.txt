@@ -14,6 +14,7 @@ set(_${COMPONENT_NAME}_cu_sources
             PolydisperseDriverPotentialPairGPU.cu
             PolydisperseLJDriverPotentialPairGPU.cu
             Polydisperse18DriverPotentialPairGPU.cu
+            Polydisperse10DriverPotentialPairGPU.cu
     )
 
 # Need to define NO_IMPORT_ARRAY in every file but module.cc

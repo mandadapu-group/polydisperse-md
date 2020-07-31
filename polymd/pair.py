@@ -240,7 +240,7 @@ class polydisperse(md_pair.pair):
         lj.pair_coeff.set(['A', 'B'], ['C', 'D'], epsilon=1.5, sigma=2.0)
 
     """
-    def __init__(self, r_cut, nlist, model='nature2019',name=None):
+    def __init__(self, r_cut, nlist, model,name=None):
         hoomd.util.print_status_line();
 
         # tell the base class how we operate
@@ -273,6 +273,14 @@ class polydisperse(md_pair.pair):
                 self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
                 self.cpp_force = _polymd.PotentialPairPolydisperse18GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
                 self.cpp_class = _polymd.PotentialPairPolydisperse18GPU;
+        elif (model == "polydisperse10"):
+            if not hoomd.context.exec_conf.isCUDAEnabled():
+                self.cpp_force = _polymd.PotentialPairPolydisperse10(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperse10;
+            else:
+                self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
+                self.cpp_force = _polymd.PotentialPairPolydisperse10GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperse10GPU;
         hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
 
         # setup the coefficient options
@@ -286,6 +294,11 @@ class polydisperse(md_pair.pair):
             self.pair_coeff.set_default_coeff('v0', 1.0);
             self.pair_coeff.set_default_coeff('eps', 0.0);
             self.pair_coeff.set_default_coeff('scaledr_cut', 1.25);
+        elif (model == "polydisperse10"):
+            self.required_coeffs = ['v0', 'eps', 'scaledr_cut'];
+            self.pair_coeff.set_default_coeff('v0', 1.0);
+            self.pair_coeff.set_default_coeff('eps', 0.0416667);
+            self.pair_coeff.set_default_coeff('scaledr_cut', 1.48);
         elif (model == "lennardjones"):
             self.required_coeffs = ['v0', 'eps', 'scaledr_cut'];
             self.pair_coeff.set_default_coeff('v0', 1.0);

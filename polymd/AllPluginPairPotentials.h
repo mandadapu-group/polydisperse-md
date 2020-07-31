@@ -13,6 +13,7 @@
 #include "EvaluatorPairPolydisperse.h"
 #include "EvaluatorPairPolydisperseLJ.h"
 #include "EvaluatorPairPolydisperse18.h"
+#include "EvaluatorPairPolydisperse10.h"
 
 #ifdef ENABLE_CUDA
 #include "hoomd/md/PotentialPairGPU.h"
@@ -33,6 +34,7 @@ typedef PotentialPair<EvaluatorPairForceShiftedLJPlugin> PotentialPairForceShift
 typedef PotentialPair<EvaluatorPairPolydisperse> PotentialPairPolydisperse;
 typedef PotentialPair<EvaluatorPairPolydisperseLJ> PotentialPairPolydisperseLJ;
 typedef PotentialPair<EvaluatorPairPolydisperse18> PotentialPairPolydisperse18;
+typedef PotentialPair<EvaluatorPairPolydisperse10> PotentialPairPolydisperse10;
 
 #ifdef ENABLE_CUDA
 //! Pair potential force compute for lj forces on the GPU
@@ -41,6 +43,7 @@ typedef PotentialPairGPU< EvaluatorPairForceShiftedLJPlugin, gpu_compute_forcesh
 typedef PotentialPairGPU< EvaluatorPairPolydisperse, gpu_compute_polydispersetemp_forces > PotentialPairPolydisperseGPU;
 typedef PotentialPairGPU< EvaluatorPairPolydisperseLJ, gpu_compute_polydisperse_ljtemp_forces > PotentialPairPolydisperseLJGPU;
 typedef PotentialPairGPU< EvaluatorPairPolydisperse18, gpu_compute_polydisperse_18temp_forces > PotentialPairPolydisperse18GPU;
+typedef PotentialPairGPU< EvaluatorPairPolydisperse10, gpu_compute_polydisperse_10temp_forces > PotentialPairPolydisperse10GPU;
 #endif
 
 #endif // __PAIR_POTENTIALS_PLUGIN_H__
