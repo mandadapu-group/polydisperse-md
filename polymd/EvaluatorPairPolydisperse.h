@@ -151,7 +151,7 @@ class EvaluatorPairPolydisperse
                     Scalar r2inv = sigma*sigma*Scalar(1.0)/rsq;
                     Scalar _rsq = Scalar(1.0)*rsq/(sigma*sigma);
                     Scalar r6inv = r2inv * r2inv * r2inv;
-                    force_divr = Scalar(12.0)*v0*r2inv*r6inv*r6inv-Scalar(2.0)*c1 -Scalar(4.0)*c2*_rsq;
+                    force_divr = (Scalar(12.0)*v0*r2inv*r6inv*r6inv-Scalar(2.0)*c1 -Scalar(4.0)*c2*_rsq)/(sigma*sigma);
                     
                     //No energy shift is needed
                     pair_eng = v0*r6inv*r6inv+c0+c1*_rsq+c2*_rsq*_rsq;
@@ -169,7 +169,7 @@ class EvaluatorPairPolydisperse
         */
         static std::string getName()
             {
-            return std::string("polydisperse");
+            return std::string("polydisperse-12");
             }
         std::string getShapeSpec() const
             {

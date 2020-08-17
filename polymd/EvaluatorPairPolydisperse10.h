@@ -153,7 +153,7 @@ class EvaluatorPairPolydisperse10
                     Scalar r2inv = sigma*sigma*Scalar(1.0)/rsq;
                     Scalar _rsq = Scalar(1.0)*rsq/(sigma*sigma);
                     Scalar r10inv = r2inv * r2inv * r2inv * r2inv * r2inv;
-                    force_divr = Scalar(10.0)*v0*r2inv*r10inv-Scalar(2.0)*c1 -Scalar(4.0)*c2*_rsq-Scalar(6.0)*c3*_rsq*_rsq;
+                    force_divr = (Scalar(10.0)*v0*r2inv*r10inv-Scalar(2.0)*c1 -Scalar(4.0)*c2*_rsq-Scalar(6.0)*c3*_rsq*_rsq)/(sigma*sigma);
                     
                     //No energy shift is needed
                     pair_eng = v0*r10inv+c0+c1*_rsq+c2*_rsq*_rsq+c3*_rsq*_rsq*_rsq;
