@@ -281,6 +281,14 @@ class polydisperse(md_pair.pair):
                 self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
                 self.cpp_force = _polymd.PotentialPairPolydisperse10GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
                 self.cpp_class = _polymd.PotentialPairPolydisperse10GPU;
+        elif (model == "polydisperse106"):
+            if not hoomd.context.exec_conf.isCUDAEnabled():
+                self.cpp_force = _polymd.PotentialPairPolydisperseLJ106(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperseLJ106;
+            else:
+                self.nlist.cpp_nlist.setStorageMode(_md.NeighborList.storageMode.full);
+                self.cpp_force = _polymd.PotentialPairPolydisperseLJ106GPU(hoomd.context.current.system_definition, self.nlist.cpp_nlist, self.name);
+                self.cpp_class = _polymd.PotentialPairPolydisperseLJ106GPU;
         hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
 
         # setup the coefficient options
@@ -299,6 +307,11 @@ class polydisperse(md_pair.pair):
             self.pair_coeff.set_default_coeff('v0', 1.0);
             self.pair_coeff.set_default_coeff('eps', 0.0416667);
             self.pair_coeff.set_default_coeff('scaledr_cut', 1.48);
+        elif (model == "polydisperse106"):
+            self.required_coeffs = ['v0', 'eps', 'scaledr_cut'];
+            self.pair_coeff.set_default_coeff('v0', 1.0);
+            self.pair_coeff.set_default_coeff('eps', 0.1);
+            self.pair_coeff.set_default_coeff('scaledr_cut', 2.5);
         elif (model == "lennardjones"):
             self.required_coeffs = ['v0', 'eps', 'scaledr_cut'];
             self.pair_coeff.set_default_coeff('v0', 1.0);
