@@ -32,4 +32,7 @@ cudaError_t gpu_compute_polydisperse_18temp_forces(const pair_args_t& pair_args,
 
 cudaError_t gpu_compute_polydisperse_10temp_forces(const pair_args_t& pair_args,
                                       const Scalar3 *d_params);
+
+cudaError_t gpu_compute_polydisperse_LJ106temp_forces(const pair_args_t& pair_args,
+                                      const Scalar3 *d_params);
 #endif
