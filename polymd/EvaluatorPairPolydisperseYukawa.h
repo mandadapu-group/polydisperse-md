@@ -105,7 +105,7 @@ class EvaluatorPairPolydisperseYukawa
             \param _params Per type pair parameters of this potential
         */
         DEVICE EvaluatorPairPolydisperseYukawa(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
-            : rsq(_rsq), rcutsq(_rcutsq), v0(_params.x), eps(_params.y), scaledr_cut(_params.z), kappa(_params.w), c0(-0.0081759), c1(0.00149692), c2(-0.0000704655)
+            : rsq(_rsq), rcutsq(_rcutsq), v0(_params.x), eps(_params.y), scaledr_cut(_params.z), kappa(_params.w), c0(-0.0081758995207425201542184307608647), c1(0.0014969152162365760170546672671884), c2(-0.000070465474555665792151428357361285)
             {
                 Scalar expfactor = fast::exp(-kappa*scaledr_cut);
                 c0 = -((expfactor*(Scalar(15) + Scalar(7)*kappa*scaledr_cut + kappa*kappa*scaledr_cut*scaledr_cut)*v0)/(Scalar(8)*scaledr_cut));
@@ -151,8 +151,8 @@ class EvaluatorPairPolydisperseYukawa
                     {
                     Scalar r2inv = sigma*sigma*Scalar(1.0)/rsq;
                     Scalar _rsq = Scalar(1.0)*rsq/(sigma*sigma);
-                    Scalar rinv = fast::rsqrt(r2inv);
-                    Scalar rroot = fast::rsqrt(_rsq);
+                    Scalar rinv = fast::sqrt(r2inv);
+                    Scalar rroot = fast::sqrt(_rsq);
                     Scalar expfactor = fast::exp(-kappa*rroot);
                     force_divr = ((expfactor*(rinv + kappa)*v0)*r2inv - Scalar(2.0)*c1 - Scalar(4.0)*c2*_rsq)/(sigma*sigma);
                     

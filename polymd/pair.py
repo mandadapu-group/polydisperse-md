@@ -367,13 +367,13 @@ class polydisperseyukawa(md_pair.pair):
         lj.pair_coeff.set(['A', 'B'], ['C', 'D'], epsilon=1.5, sigma=2.0)
 
     """
-    def __init__(self, r_cut, nlist, model,name=None):
+    def __init__(self, r_cut, nlist, model):
         hoomd.util.print_status_line();
 
         # tell the base class how we operate
 
         # initialize the base class
-        md_pair.pair.__init__(self, r_cut, nlist, name);
+        md_pair.pair.__init__(self, r_cut, nlist, "polydisperse_yukawa");
         
         # create the c++ mirror class
         if not hoomd.context.exec_conf.isCUDAEnabled():
