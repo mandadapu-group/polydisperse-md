@@ -1,9 +1,5 @@
 set(COMPONENT_NAME polymd)
 
-
-
-# set the appropriate compiler flags on the _llvm target
-
 set(_${COMPONENT_NAME}_sources 
                     module-md-plugin.cc
                     )

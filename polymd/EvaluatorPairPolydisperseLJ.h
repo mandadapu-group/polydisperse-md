@@ -107,9 +107,9 @@ class EvaluatorPairPolydisperseLJ
         DEVICE EvaluatorPairPolydisperseLJ(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
             : rsq(_rsq), rcutsq(_rcutsq), v0(_params.x), eps(_params.y), scaledr_cut(_params.z), c0(Scalar(-1.92415)), c1(Scalar(2.11106)), c2(Scalar(-0.591097))
             {
-                c0 =  Scalar(-28.0)*v0/pow(scaledr_cut,12)+Scalar(10.0)/pow(scaledr_cut,6);
-                c1 =  Scalar(48.0)*v0/pow(scaledr_cut,14)-Scalar(15.0)/pow(scaledr_cut,8);
-                c2 =  Scalar(-21.0)*v0/pow(scaledr_cut,16)+Scalar(6.0)/pow(scaledr_cut,10);
+                c0 =  Scalar(-28.0)*v0/pow(scaledr_cut,12)+Scalar(10.0)*v0/pow(scaledr_cut,6);
+                c1 =  Scalar(48.0)*v0/pow(scaledr_cut,14)-Scalar(15.0)*v0/pow(scaledr_cut,8);
+                c2 =  Scalar(-21.0)*v0/pow(scaledr_cut,16)+Scalar(6.0)*v0/pow(scaledr_cut,10);
             }
 
         //! LJ doesn't use diameter
