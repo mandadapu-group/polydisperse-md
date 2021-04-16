@@ -88,25 +88,76 @@ The plugin is a complement for HOOMD's MD, which means that you need to import t
 
 ```python
 import hoomd
-from hoomd import md
-from hoomd import polymd # this is our plugin!
-hoomd.context.initialize()
+import hoomd.md as md
+import hoomd.polymd as polymd
+import numpy as np
+from numpy.random import uniform, seed
 
-# Create a 10x10x10 simple cubic lattice of particles with type name A
-hoomd.init.create_lattice(unitcell=hoomd.lattice.sc(a=2.0, type_name='A'), n=10)
+seed(0)
+hoomd.context.initialize("--mode=cpu --notice-level=2");
 
-# Specify Lennard-Jones interactions between particle pairs
-# We will use polymd for this
+#Set up "equilibration" and "production" runs
+deltat = 0.002
+totalsteps = 10/deltat
+eqtotalsteps = 10/deltat
+snapshots = 1000
+kT = 0.25
+
+#Initialize Our Own Configuration using a Snapshot
+rho = 1.00
+LParticles = 64;
+NParticles = LParticles**2
+dmax = 1.0
+dmin = 0.5
+
+Length = LParticles
+MyBox = hoomd.data.boxdim(L=Length, dimensions=2)
+snap = hoomd.data.make_snapshot(N=NParticles, box=MyBox, particle_types=['A'])
+snap.particles.types = ['A']
+
+def placePolydisperseOnSquare(snap):
+    for i in range(LParticles):
+        for j in range(LParticles):
+            snap.particles.position[i*LParticles+j,0] = Length*(i/LParticles-0.5)
+            snap.particles.position[i*LParticles+j,1] = Length*(j/LParticles-0.5)
+            snap.particles.position[i*LParticles+j,2] = 0
+            snap.particles.diameter[i*LParticles+j] = uniform(dmin,dmax)
+
+placePolydisperseOnSquare(snap)
+system = hoomd.init.read_snapshot(snap);
 nl = md.nlist.cell()
-lj = polymd.pair.lj_plugin(r_cut=2.5, nlist=nl)
-lj.pair_coeff.set('A', 'A', epsilon=1.0, sigma=1.0)
 
-# Integrate at constant temperature
-md.integrate.mode_standard(dt=0.005)
-hoomd.md.integrate.langevin(group=hoomd.group.all(), kT=1.2, seed=4)
+#Set up the pair potential
+poly12 = polymd.pair.polydisperse(r_cut=4.0,nlist=nl,model='polydisperse12')
+poly12.pair_coeff.set('A', 'A',v0=1.0,eps=0.2,scaledr_cut=1.25)
+poly12.set_params(mode="no_shift")
 
-# Run for 10,000 time steps
-hoomd.run(10e3)
+
+#Set up NVT thermostat
+all = hoomd.group.all();
+md.integrate.mode_standard(dt=deltat);
+integrator = md.integrate.nvt(group=all, kT=kT, tau=50*deltat);
+integrator.randomize_velocities(seed=339021)
+
+#Equilibration Run on NVT Ensemble
+eqsamplingtime = int(eqtotalsteps/100)
+if eqsamplingtime == 0:
+    eqsamplingtime = 1
+logger = hoomd.analyze.log(filename='mylogeq1.log', period=eqsamplingtime, quantities=['temperature','potential_energy','kinetic_energy','momentum'], phase=0)
+hoomd.run_upto(eqtotalsteps);
+
+#Production Run on NVE Ensemble
+integrator.disable()
+integrator = md.integrate.nve(group=all)
+
+samplingtime = int(totalsteps/snapshots)
+if samplingtime == 0:
+    samplingtime = 1
+
+hoomd.dump.gsd(filename="restart1.gsd", group=hoomd.group.all(), dynamic=['attribute','momentum'],truncate=True, period=samplingtime, phase=0)
+hoomd.dump.gsd(filename="dump1.gsd", group=hoomd.group.all(), dynamic=['attribute','momentum'],period=samplingtime, phase=0)
+logger = hoomd.analyze.log(filename='mylog1.log', period=samplingtime, quantities=['temperature','pressure_xx','pressure_yy','pressure_xy','potential_energy','kinetic_energy','momentum'],phase=0)
+hoomd.run_upto(eqtotalsteps+totalsteps);
 ```
 
 (More Instructions, coming soon . . .)
