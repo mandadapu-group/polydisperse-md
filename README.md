@@ -178,7 +178,7 @@ The models available to use and currently implemented are as follows:
 |   polydisperse10  |   3       |   10      |   0       |
 |   polydisperse106 |   2       |   10      |   6       |
 
-You will see in parallel-swap-mc/patch.py file that there are other pair potentials, but I haven't thoroughly tested them or haven't checked their implementation in a long time! So be please be aware. 
+You will see in polymd/pair.py file that there are other pair potentials, but I haven't thoroughly tested them or haven't checked their implementation in a long time! So be please be aware. 
 
 (More Instructions, coming soon . . .)
 
