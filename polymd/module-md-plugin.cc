@@ -27,7 +27,6 @@ PYBIND11_MODULE(_polymd, m)
     export_PotentialPair<PotentialPairPolydisperse18>(m, "PotentialPairPolydisperse18");
     export_PotentialPair<PotentialPairPolydisperse10>(m, "PotentialPairPolydisperse10");
     export_PotentialPair<PotentialPairPolydisperseLJ106>(m, "PotentialPairPolydisperseLJ106");
-    export_PotentialPair<PotentialPairPolydisperseYukawa>(m, "PotentialPairPolydisperseYukawa");
 
 #ifdef ENABLE_CUDA
     export_PotentialPairGPU<PotentialPairLJPluginGPU, PotentialPairLJPlugin>(m, "PotentialPairLJPluginGPU");
@@ -37,6 +36,5 @@ PYBIND11_MODULE(_polymd, m)
     export_PotentialPairGPU<PotentialPairPolydisperse18GPU, PotentialPairPolydisperse18>(m, "PotentialPairPolydisperse18GPU");
     export_PotentialPairGPU<PotentialPairPolydisperse10GPU, PotentialPairPolydisperse10>(m, "PotentialPairPolydisperse10GPU");
     export_PotentialPairGPU<PotentialPairPolydisperseLJ106GPU, PotentialPairPolydisperseLJ106>(m, "PotentialPairPolydisperseLJ106GPU");
-    export_PotentialPairGPU<PotentialPairPolydisperseYukawaGPU, PotentialPairPolydisperseYukawa>(m, "PotentialPairPolydisperseYukawaGPU");
 #endif
     }
