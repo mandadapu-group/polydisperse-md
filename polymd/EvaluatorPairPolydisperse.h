@@ -1,197 +1,227 @@
-// Copyright (c) 2009-2019 The Regents of the University of Michigan
-// This file is part of the HOOMD-blue project, released under the BSD 3-Clause License.
-
-
-// Maintainer: joaander
+// Copyright (c) 2009-2022 The Regents of the University of Michigan.
+// Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef __PAIR_EVALUATOR_POLYDISPERSE_H__
 #define __PAIR_EVALUATOR_POLYDISPERSE_H__
 
-#ifndef NVCC
+#ifndef __HIPCC__
 #include <string>
 #endif
 
 #include "hoomd/HOOMDMath.h"
 
 /*! \file EvaluatorPairPolydisperse.h
-    \brief Defines the pair evaluator class for LJ potentials
-    \details As the prototypical example of a MD pair potential, this also serves as the primary documentation and
-    base reference for the implementation of pair evaluators.
+    \brief Defines the pair evaluator class for Polydisperse potentials
+    \details As the prototypical example of a MD pair potential, this also serves as the primary
+   documentation and base reference for the implementation of pair evaluators.
 */
 
 // need to declare these class methods with __device__ qualifiers when building in nvcc
-// DEVICE is __host__ __device__ when included in nvcc and blank when included into the host compiler
-#ifdef NVCC
+// DEVICE is __host__ __device__ when included in nvcc and blank when included into the host
+// compiler
+#ifdef __HIPCC__
 #define DEVICE __device__
+#define HOSTDEVICE __host__ __device__
 #else
 #define DEVICE
+#define HOSTDEVICE
 #endif
 
-//! Class for evaluating the LJ pair potential
-/*! <b>General Overview</b>
-
-    EvaluatorPairPolydisperse is a low level computation class that computes the LJ pair potential V(r). As the standard
-    MD potential, it also serves as a well documented example of how to write additional pair potentials. "Standard"
-    pair potentials in hoomd are all handled via the template class PotentialPair. PotentialPair takes a potential
-    evaluator as a template argument. In this way, all the complicated data management and other details of computing
-    the pair force and potential on every single particle is only written once in the template class and the difference
-    V(r) potentials that can be calculated are simply handled with various evaluator classes. Template instantiation is
-    equivalent to inlining code, so there is no performance loss.
-
-    In hoomd, a "standard" pair potential is defined as V(rsq, rcutsq, params, di, dj, qi, qj), where rsq is the squared
-    distance between the two particles, rcutsq is the cutoff radius at which the potential goes to 0, params is any
-    number of per type-pair parameters, di, dj are the diameters of particles i and j, and qi, qj are the charges of
-    particles i and j respectively.
-
-    Diameter and charge are not always needed by a given pair evaluator, so it must provide the functions
-    needsDiameter() and needsCharge() which return boolean values signifying if they need those quantities or not. A
-    false return value notifies PotentialPair that it need not even load those values from memory, boosting performance.
-
-    If needsDiameter() returns true, a setDiameter(Scalar di, Scalar dj) method will be called to set the two diameters.
-    Similarly, if needsCharge() returns true, a setCharge(Scalar qi, Scalar qj) method will be called to set the two
-    charges.
-
-    All other arguments are common among all pair potentials and passed into the constructor. Coefficients are handled
-    in a special way: the pair evaluator class (and PotentialPair) manage only a single parameter variable for each
-    type pair. Pair potentials that need more than 1 parameter can specify that their param_type be a compound
-    structure and reference that. For coalesced read performance on G200 GPUs, it is highly recommended that param_type
-    is one of the following types: Scalar, Scalar2, Scalar4.
-
-    The program flow will proceed like this: When a potential between a pair of particles is to be evaluated, a
-    PairEvaluator is instantiated, passing the common parameters to the constructor and calling setDiameter() and/or
-    setCharge() if need be. Then, the evalForceAndEnergy() method is called to evaluate the force and energy (more
-    on that later). Thus, the evaluator must save all of the values it needs to compute the force and energy in member
-    variables.
-
-    evalForceAndEnergy() makes the necessary computations and sets the out parameters with the computed values.
-    Specifically after the method completes, \a force_divr must be set to the value
-    \f$ -\frac{1}{r}\frac{\partial V}{\partial r}\f$ and \a pair_eng must be set to the value \f$ V(r) \f$ if \a energy_shift is false or
-    \f$ V(r) - V(r_{\mathrm{cut}}) \f$ if \a energy_shift is true.
-
-    A pair potential evaluator class is also used on the GPU. So all of its members must be declared with the
-    DEVICE keyword before them to mark them __device__ when compiling in nvcc and blank otherwise. If any other code
-    needs to diverge between the host and device (i.e., to use a special math function like __powf on the device), it
-    can similarly be put inside an ifdef NVCC block.
-
-    <b>LJ specifics</b>
-
-    EvaluatorPairPolydisperse evaluates the function:
-    \f[ V_{\mathrm{LJ}}(r) = 4 \varepsilon \left[ \left( \frac{\sigma}{r} \right)^{12} -
-                                            \alpha \left( \frac{\sigma}{r} \right)^{6} \right] \f]
-    broken up as follows for efficiency
-    \f[ V_{\mathrm{LJ}}(r) = r^{-6} \cdot \left( 4 \varepsilon \sigma^{12} \cdot r^{-6} -
-                                            4 \alpha \varepsilon \sigma^{6} \right) \f]
-    . Similarly,
-    \f[ -\frac{1}{r} \frac{\partial V_{\mathrm{LJ}}}{\partial r} = r^{-2} \cdot r^{-6} \cdot
-            \left( 12 \cdot 4 \varepsilon \sigma^{12} \cdot r^{-6} - 6 \cdot 4 \alpha \varepsilon \sigma^{6} \right) \f]
-
-    The LJ potential does not need diameter or charge. Two parameters are specified and stored in a Scalar2. \a lj1 is
-    placed in \a params.x and \a lj2 is in \a params.y.
-
-    These are related to the standard lj parameters sigma and epsilon by:
-    - \a lj1 = 4.0 * epsilon * pow(sigma,12.0)
-    - \a lj2 = alpha * 4.0 * epsilon * pow(sigma,6.0);
-
-*/
-class EvaluatorPairPolydisperse
+namespace hoomd
+{
+    namespace md
     {
-    public:
-        //! Define the parameter type used by this pair potential evaluator
-        typedef Scalar3 param_type;
+    //! Class for evaluating the Polydisperse pair potential
+    /*! <b>General Overview</b>
+    
+     TO DO: Write a general overview
 
-        //! Constructs the pair potential evaluator
-        /*! \param _rsq Squared distance between the particles
-            \param _rcutsq Squared distance at which the potential goes to 0
-            \param _params Per type pair parameters of this potential
-        */
-        DEVICE EvaluatorPairPolydisperse(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
-            : rsq(_rsq), rcutsq(_rcutsq), v0(_params.x), eps(_params.y), scaledr_cut(_params.z), c0(Scalar(-1.92415)), c1(Scalar(2.11106)), c2(Scalar(-0.591097))
-            {
-                c0 =  Scalar(-28.0)*v0/pow(scaledr_cut,12);
-                c1 =  Scalar(48.0)*v0/pow(scaledr_cut,14);
-                c2 =  Scalar(-21.0)*v0/pow(scaledr_cut,16);
-            }
-
-        //! LJ doesn't use diameter
-        DEVICE static bool needsDiameter() { return true; }
-        //! Accept the optional diameter values
-        /*! \param di Diameter of particle i
-            \param dj Diameter of particle j
-        */
-        DEVICE void setDiameter(Scalar di, Scalar dj) 
+    */
+        class EvaluatorPairPolydisperse
         {
-           d_i = di;
-           d_j = dj; 
-        }
+            public:
+                //! Define the parameter type used by this pair potential evaluator
+                struct param_type
+                {
+                    Scalar v0;
+                    Scalar rcut;
+                    Scalar eps;
+                    Scalar c0;
+                    Scalar c1;
+                    Scalar c2;
+                    Scalar m_expnt;
+                    Scalar n_expnt;
 
-        //! LJ doesn't use charge
-        DEVICE static bool needsCharge() { return false; }
-        //! Accept the optional diameter values
-        /*! \param qi Charge of particle i
-            \param qj Charge of particle j
-        */
-        DEVICE void setCharge(Scalar qi, Scalar qj) { }
+                    DEVICE void load_shared(char*& ptr, unsigned int& available_bytes) { }
 
-        //! Evaluate the force and energy
-        /*! \param force_divr Output parameter to write the computed force divided by r.
-            \param pair_eng Output parameter to write the computed pair energy
-            \param energy_shift If true, the potential must be shifted so that V(r) is continuous at the cutoff
-            \note There is no need to check if rsq < rcutsq in this method. Cutoff tests are performed
-                  in PotentialPair.
+                    HOSTDEVICE void allocate_shared(char*& ptr, unsigned int& available_bytes) const { }
 
-            \return True if they are evaluated or false if they are not because we are beyond the cutoff
-        */
-        DEVICE bool evalForceAndEnergy(Scalar& force_divr, Scalar& pair_eng, bool energy_shift)
+#ifdef ENABLE_HIP
+                    //! Set CUDA memory hints
+                    void set_memory_hint() const
+                    {
+                        // default implementation does nothing
+                    }
+#endif
+
+#ifndef __HIPCC__
+                    param_type() : v0(0.0), m_expnt(0), n_expnt(0), rcut(0.0), eps(0.0), c0(0.0), c1(0.0), c2(0.0)
+                    {}
+
+                    param_type(pybind11::dict v, bool managed = false)
+                    {
+                        v0 = v["v0"].cast<Scalar>();
+                        rcut = v["rcut"].cast<Scalar>();
+                        eps = v["eps"] .cast<Scalar>();
+                        c0 = v["c0"].cast<Scalar>();
+                        c1 = v["c1"].cast<Scalar>();
+                        c2 = v["c2"].cast<Scalar>();
+                        m_expnt = v["m_expnt"].cast<Scalar>();
+                        n_expnt = v["n_expnt"].cast<Scalar>();
+                    }
+
+                    pybind11::dict asDict()
+                    {
+                        pybind11::dict v;
+                        v["eps"] = eps;//#0.0;
+                        v["v0"] = v0;//#0.0;
+                        v["m_expnt"] = m_expnt;//0;
+                        v["n_expnt"] = n_expnt;
+                        v["rcut"] = rcut;
+                        v["c2"] = c2;
+                        v["c1"] = c1;
+                        v["c0"] = c0;
+                        return v;
+                    }
+#endif
+                }
+#ifdef SINGLE_PRECISION
+            __attribute__((aligned(8)));
+#else
+            __attribute__((aligned(16)));
+#endif
+
+            //! Constructs the pair potential evaluator
+            /*! \param _rsq Squared distance between the particles
+                \param _rcutsq Squared distance at which the potential goes to 0
+                \param _params Per type pair parameters of this potential
+            */
+            DEVICE EvaluatorPairPolydisperse(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
+                : rsq(_rsq), rcutsq(_rcutsq), v0(_params.v0), eps(_params.eps), rcut(_params.rcut), m_expnt(static_cast<int>(_params.m_expnt)), n_expnt(static_cast<int>(_params.n_expnt)), mhalf(static_cast<int>(_params.m_expnt/2)), nhalf(static_cast<int>(_params.n_expnt/2)), c0(_params.c0), c1(_params.c1), c2(_params.c2)
+                {
+                }
+
+            //! Polydisperse particles obviously use diameter
+            DEVICE static bool needsDiameter()
+                {
+                return true;
+                }
+            //! Accept the optional diameter values
+            /*! \param di Diameter of particle i
+                \param dj Diameter of particle j
+            */
+            DEVICE void setDiameter(Scalar di, Scalar dj) 
+                {
+                   d_i = di;
+                   d_j = dj; 
+                }
+
+            //! Polydisperse doesn't use charge
+            DEVICE static bool needsCharge()
+                {
+                return false;
+                }
+            //! Accept the optional diameter values
+            /*! \param qi Charge of particle i
+                \param qj Charge of particle j
+            */
+            DEVICE void setCharge(Scalar qi, Scalar qj) { }
+
+            //! Evaluate the force and energy
+            DEVICE bool evalForceAndEnergy(Scalar& force_divr, Scalar& pair_eng, bool energy_shift)
             {
                 Scalar sigma = 0.5*(d_i+d_j)*(1-eps*fabs(d_i-d_j));
-                Scalar actualcutsq = scaledr_cut*scaledr_cut*sigma*sigma;
+                Scalar sigmasq = sigma*sigma;
+                Scalar actualcutsq = rcut*rcut*sigmasq;
+
                 // compute the force divided by r in force_divr
-                if (rsq < actualcutsq && v0 != 0)
+                if (rsq <= actualcutsq && v0 != 0)
+                {
+                    Scalar r2inv = sigmasq*Scalar(1.0)/rsq;
+                    Scalar r2 = Scalar(1.0)*rsq/(sigmasq);
+                    Scalar rattr = 1.0;
+                    Scalar rrep = 1.0;
+                    
+                    //Figure out how many times to for loop to get the attractive and repulsive part of the potentials
+                    for (int i = 0; i < mhalf; i++)
                     {
-                    Scalar r2inv = sigma*sigma*Scalar(1.0)/rsq;
-                    Scalar _rsq = Scalar(1.0)*rsq/(sigma*sigma);
-                    Scalar r6inv = r2inv * r2inv * r2inv;
-                    force_divr = (Scalar(12.0)*v0*r2inv*r6inv*r6inv-Scalar(2.0)*c1 -Scalar(4.0)*c2*_rsq)/(sigma*sigma);
+                        rrep *= r2;
+                        if (i < nhalf)
+                        {
+                            rattr *= r2;
+                        }
+                    }
+                    force_divr = (Scalar(m_expnt)*v0*r2inv*rrep-Scalar(n_expnt)*v0*r2inv*rattr-Scalar(2.0)*c1 -Scalar(4.0)*c2*rsq)/(sigmasq);
                     
                     //No energy shift is needed
-                    pair_eng = v0*r6inv*r6inv+c0+c1*_rsq+c2*_rsq*_rsq;
+                    pair_eng = v0*(rrep-rattr)+c0+c1*rsq+c2*rsq*rsq;
                     
                     return true;
-                    }
+                }
                 else
                     return false;
             }
 
-        #ifndef NVCC
-        //! Get the name of this potential
-        /*! \returns The potential name. Must be short and all lowercase, as this is the name energies will be logged as
-            via analyze.log.
-        */
-        static std::string getName()
+            DEVICE Scalar evalPressureLRCIntegral()
             {
-            return std::string("polydisperse-12");
+                //throw std::runtime_error("evalPresureLRCIntegral is not implemented yet for this pair potential.");
+                return 0;
             }
-        std::string getShapeSpec() const
+
+            DEVICE Scalar evalEnergyLRCIntegral()
             {
-            throw std::runtime_error("Shape definition not supported for this pair potential.");
+                //throw std::runtime_error("evalEnergyLRCIntegral is not implemented yet for this pair potential.");
+                return 0;
             }
-        #endif
 
-    protected:
-        Scalar rsq;     //!< Stored rsq from the constructor
-        Scalar rcutsq;  //!< Stored rcutsq from the constructor
-        Scalar d_i;     //!< d_i diameter of particle i
-        Scalar d_j;     //!< d_j diameter of particle j
-        
-        //Parameters to be read
-        Scalar v0;
-        Scalar eps;
-        Scalar scaledr_cut;
+#ifndef __HIPCC__
+            //! Get the name of this potential
+            /*! \returns The potential name.
+             */
+            static std::string getName()
+            {
+                return std::string("polydisperse");
+            }
 
-        //Additional parameters to be computed from the ones I read 
-        Scalar c0;
-        Scalar c1;
-        Scalar c2;
-    };
+            std::string getShapeSpec() const
+            {
+                throw std::runtime_error("Shape definition not supported for this pair potential.");
+            }
+#endif
+
+        protected:
+            Scalar rsq;     //!< Stored rsq from the constructor
+            Scalar rcutsq;  //!< Stored rcutsq from the constructor
+            Scalar d_i;     //!< d_i diameter of particle i
+            Scalar d_j;     //!< d_j diameter of particle j
+            
+            //Parameters to be read
+            Scalar v0;
+            Scalar eps;
+            Scalar rcut;
+
+            //Additional parameters to be computed from the ones I read 
+            Scalar c0;
+            Scalar c1;
+            Scalar c2;
+
+            //Integer exponent of the pair potential
+            int m_expnt;
+            int mhalf;
+            int n_expnt;
+            int nhalf;
+        };
+    } // end namespace md
+} // end namespace hoomd
 
 #endif // __PAIR_EVALUATOR_POLYDISPERSE_H__

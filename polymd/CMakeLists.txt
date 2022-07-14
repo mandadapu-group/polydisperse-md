@@ -1,79 +1,94 @@
 set(COMPONENT_NAME polymd)
 
-set(_${COMPONENT_NAME}_sources 
-                    module-md-plugin.cc
-                    )
+set(_polymd_sources module-polymd.cc)
 
-set(_${COMPONENT_NAME}_cu_sources 
-            LJPluginDriverPotentialPairGPU.cu
-            ForceShiftedLJPluginDriverPotentialPairGPU.cu
-            PolydisperseDriverPotentialPairGPU.cu
-            PolydisperseLJDriverPotentialPairGPU.cu
-            Polydisperse18DriverPotentialPairGPU.cu
-            Polydisperse10DriverPotentialPairGPU.cu
-            PolydisperseLJ106DriverPotentialPairGPU.cu
+set(_polymd_headers EvaluatorPairPolydisperse.h
     )
 
-# Need to define NO_IMPORT_ARRAY in every file but module.cc
-set_source_files_properties(${_${COMPONENT_NAME}_sources} ${_${COMPONENT_NAME}_cu_sources} PROPERTIES COMPILE_DEFINITIONS NO_IMPORT_ARRAY)
-                
-if (ENABLE_CUDA)
-CUDA_COMPILE(_CUDA_GENERATED_FILES ${_${COMPONENT_NAME}_cu_sources} OPTIONS ${CUDA_ADDITIONAL_OPTIONS} SHARED)
-endif (ENABLE_CUDA)
+#set(_polymd_cu_sources 
+#    AllDriverPotentialPairPluginGPU.cu
+#            LJPluginDriverPotentialPairGPU.cu
+#            ForceShiftedLJPluginDriverPotentialPairGPU.cu
+#            PolydisperseDriverPotentialPairGPU.cu
+#            PolydisperseLJDriverPotentialPairGPU.cu
+#            Polydisperse18DriverPotentialPairGPU.cu
+#            Polydisperse10DriverPotentialPairGPU.cu
+#            PolydisperseLJ106DriverPotentialPairGPU.cu
+#    )
 
-pybind11_add_module (_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} ${_CUDA_GENERATED_FILES} NO_EXTRAS)
-#pybind11_add_module (_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} NO_EXTRAS)
+#More Pair Potentials can be added (in theory)
+set(_pair_evaluators LJ
+                    #Polydisperse
+                     )
 
-# link the library to its dependencies
-target_link_libraries(_${COMPONENT_NAME} ${HOOMD_LIBRARIES} ${HOOMD_MD_LIB})
+foreach(_evaluator ${_pair_evaluators})
+    set(_evaluator_cpp ${_evaluator})
 
-# if we are compiling with MPI support built in, set appropriate
-# compiler/linker flags
-if (ENABLE_MPI)
-   if(MPI_COMPILE_FLAGS)
-       set_target_properties(_${COMPONENT_NAME} PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
-   endif(MPI_COMPILE_FLAGS)
-   if(MPI_LINK_FLAGS)
-       set_target_properties(_${COMPONENT_NAME} PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
-   endif(MPI_LINK_FLAGS)
-endif(ENABLE_MPI)
+    configure_file(export_PotentialPair.cc.inc
+                   export_PotentialPair${_evaluator}.cc
+                   @ONLY)
+    set(_polymd_sources ${_polymd_sources} export_PotentialPair${_evaluator}.cc)
+
+    if (ENABLE_GPU)
+       configure_file(export_PotentialPairGPU.cc.inc
+                       export_PotentialPair${_evaluator}GPU.cc
+                       @ONLY)
+       configure_file(PotentialPairGPUKernel.cu.inc
+                        PotentialPair${_evaluator}GPUKernel.cu
+                        @ONLY)
+        set(_cuda_sources ${_cuda_sources}
+            export_PotentialPair${_evaluator}GPU.cc
+            PotentialPair${_evaluator}GPUKernel.cu
+            )
+    endif()
+endforeach()
+
+pybind11_add_module(_polymd SHARED ${_polymd_sources} ${_polymd_headers} ${_cuda_sources} NO_EXTRAS)
+
+# alias into the HOOMD namespace so that plugins and symlinked components both work
+add_library(HOOMD::_polymd ALIAS _polymd)
+
+# specify required include directories
+target_include_directories(_polymd PUBLIC ${PROJECT_SOURCE_DIR}/polymd)
 
 if(APPLE)
-    set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path")
-    set_target_properties(_${COMPONENT_NAME} PROPERTIES SUFFIX ".so")
+set_target_properties(_polymd PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path")
 else()
-    set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/..;$ORIGIN")
+set_target_properties(_polymd PROPERTIES INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
 endif()
 
-fix_cudart_rpath(_${COMPONENT_NAME})
+# link the library to its dependencies
+if (CUSOLVER_AVAILABLE)
+    # CUDA 8.0 requires that we link in gomp
+    target_link_libraries(_polymd PUBLIC HOOMD::_hoomd HOOMD::_md CUDA::cusolver CUDA::cusparse gomp)
+else()
+    target_link_libraries(_polymd PUBLIC HOOMD::_hoomd HOOMD::_md)
+endif()
+if (ENABLE_GPU)
+    target_link_libraries(_polymd PRIVATE HOOMD::neighbor)
+endif()
+
+fix_cudart_rpath(_polymd)
 
 # install the library
-install(TARGETS _${COMPONENT_NAME} 
-        LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/${COMPONENT_NAME}
+install(TARGETS _polymd EXPORT HOOMDTargets
+        LIBRARY DESTINATION ${PYTHON_SITE_INSTALL_DIR}/polymd
         )
 
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
-MACRO(copy_file file)
-    add_custom_command (
-        OUTPUT ${file}
-        POST_BUILD
-        COMMAND    ${CMAKE_COMMAND}
-        ARGS       -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        COMMENT    "Copy hoomd/${COMPONENT_NAME}/${file}"
-    )
-ENDMACRO(copy_file)
+#set(files __init__.py
+#    )
 
-set(files   __init__.py
-            pair.py
-    )
+#install(FILES ${files}
+#        DESTINATION ${PYTHON_SITE_INSTALL_DIR}/polymd
+#       )
 
-install(FILES ${files}
-        DESTINATION ${PYTHON_MODULE_BASE_DIR}/${COMPONENT_NAME}
-       )
+#copy_files_to_build("${files}" "polymd" "*.py")
 
-foreach(file ${files})
-    copy_file(${file})
-endforeach()
+# install headers in installation target
+#install(FILES ${_polymd_headers}
+#        DESTINATION ${PYTHON_SITE_INSTALL_DIR}/include/hoomd/polymd
+#       )
 
-add_custom_target(copy_${COMPONENT_NAME} ALL DEPENDS ${files})
+add_subdirectory(pair)
