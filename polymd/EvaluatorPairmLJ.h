@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2022 The Regents of the University of Michigan.
+// Copyright (c) 2008-2022 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-#ifndef __PAIR_EVALUATOR_LJ_H__
-#define __PAIR_EVALUATOR_LJ_H__
+#ifndef __PAIR_EVALUATOR_mLJ_H__
+#define __PAIR_EVALUATOR_mLJ_H__
 
 #ifndef __HIPCC__
 #include <string>
@@ -10,8 +10,8 @@
 
 #include "hoomd/HOOMDMath.h"
 
-/*! \file EvaluatorPairLJ.h
-    \brief Defines the pair evaluator class for LJ potentials
+/*! \file EvaluatorPairmLJ.h
+    \brief Defines the pair evaluator class for mLJ potentials
     \details As the prototypical example of a MD pair potential, this also serves as the primary
    documentation and base reference for the implementation of pair evaluators.
 */
@@ -31,10 +31,10 @@ namespace hoomd
     {
 namespace md
     {
-//! Class for evaluating the LJ pair potential
+//! Class for evaluating the mLJ pair potential
 /*! <b>General Overview</b>
 
-    EvaluatorPairLJ is a low level computation class that computes the LJ pair potential V(r). As
+    EvaluatorPairmLJ is a low level computation class that computes the mLJ pair potential V(r). As
    the standard MD potential, it also serves as a well documented example of how to write additional
    pair potentials. "Standard" pair potentials in hoomd are all handled via the template class
    PotentialPair. PotentialPair takes a potential evaluator as a template argument. In this way, all
@@ -80,20 +80,20 @@ namespace md
    math function like __powf on the device), it can similarly be put inside an ifdef __HIPCC__
    block.
 
-    <b>LJ specifics</b>
+    <b>mLJ specifics</b>
 
-    EvaluatorPairLJ evaluates the function:
-    \f[ V_{\mathrm{LJ}}(r) = 4 \varepsilon \left[ \left( \frac{\sigma}{r} \right)^{12} -
+    EvaluatorPairmLJ evaluates the function:
+    \f[ V_{\mathrm{mLJ}}(r) = 4 \varepsilon \left[ \left( \frac{\sigma}{r} \right)^{12} -
                                             \left( \frac{\sigma}{r} \right)^{6} \right] \f]
     broken up as follows for efficiency
-    \f[ V_{\mathrm{LJ}}(r) = r^{-6} \cdot \left( 4 \varepsilon \sigma^{12} \cdot r^{-6} -
+    \f[ V_{\mathrm{mLJ}}(r) = r^{-6} \cdot \left( 4 \varepsilon \sigma^{12} \cdot r^{-6} -
                                             4 \varepsilon \sigma^{6} \right) \f]
     . Similarly,
-    \f[ -\frac{1}{r} \frac{\partial V_{\mathrm{LJ}}}{\partial r} = r^{-2} \cdot r^{-6} \cdot
+    \f[ -\frac{1}{r} \frac{\partial V_{\mathrm{mLJ}}}{\partial r} = r^{-2} \cdot r^{-6} \cdot
             \left( 12 \cdot 4 \varepsilon \sigma^{12} \cdot r^{-6} - 6 \cdot 4 \varepsilon
    \sigma^{6} \right) \f]
 
-    The LJ potential does not need diameter or charge. Two parameters are specified and stored in
+    The mLJ potential does not need diameter or charge. Two parameters are specified and stored in
     the parameter structure. It stores precomputed 4 * epsilon and sigma**6 which can be converted
     back to epsilon and sigma for the user.
 
@@ -102,7 +102,7 @@ namespace md
     - \a lj2 = 4.0 * epsilon * pow(sigma,6.0);
 
 */
-class EvaluatorPairLJ
+class EvaluatorPairmLJ
     {
     public:
     //! Define the parameter type used by this pair potential evaluator
@@ -169,13 +169,13 @@ class EvaluatorPairLJ
         \param _rcutsq Squared distance at which the potential goes to 0
         \param _params Per type pair parameters of this potential
     */
-    DEVICE EvaluatorPairLJ(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
+    DEVICE EvaluatorPairmLJ(Scalar _rsq, Scalar _rcutsq, const param_type& _params)
         : rsq(_rsq), rcutsq(_rcutsq), lj1(_params.epsilon_x_4 * _params.sigma_6 * _params.sigma_6),
           lj2(_params.epsilon_x_4 * _params.sigma_6)
         {
         }
 
-    //! LJ doesn't use diameter
+    //! mLJ doesn't use diameter
     DEVICE static bool needsDiameter()
         {
         return false;
@@ -186,7 +186,7 @@ class EvaluatorPairLJ
     */
     DEVICE void setDiameter(Scalar di, Scalar dj) { }
 
-    //! LJ doesn't use charge
+    //! mLJ doesn't use charge
     DEVICE static bool needsCharge()
         {
         return false;
@@ -293,4 +293,4 @@ class EvaluatorPairLJ
     } // end namespace md
     } // end namespace hoomd
 
-#endif // __PAIR_EVALUATOR_LJ_H__
+#endif // __PAIR_EVALUATOR_mLJ_H__

@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_PREFIX ${HOOMD_INSTALL_PREFIX} CACHE PATH "Installation prefix
 # add subdirectories
 add_subdirectory(${PROJECT_NAME})
 
-#add_subdirectory (CMake)
-
+add_subdirectory (CMake)
+#include (hoomd-macros)
 #include (HOOMDHIPSetup)
 #include (HOOMDCUDASetup)

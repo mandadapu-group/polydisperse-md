@@ -17,7 +17,7 @@ set(_polymd_headers EvaluatorPairPolydisperse.h
 #    )
 
 #More Pair Potentials can be added (in theory)
-set(_pair_evaluators LJ
+set(_pair_evaluators mLJ
                     #Polydisperse
                      )
 
@@ -54,7 +54,7 @@ target_include_directories(_polymd PUBLIC ${PROJECT_SOURCE_DIR}/polymd)
 if(APPLE)
 set_target_properties(_polymd PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path")
 else()
-set_target_properties(_polymd PROPERTIES INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
+set_target_properties(_polymd PROPERTIES INSTALL_RPATH "$ORIGIN/..;$ORIGIN")
 endif()
 
 # link the library to its dependencies
@@ -70,25 +70,40 @@ endif()
 
 fix_cudart_rpath(_polymd)
 
+#message(${HOOMD_INSTALL_PREFIX})#${PYTHON_SITE_INSTALL_DIR})
 # install the library
-install(TARGETS _polymd EXPORT HOOMDTargets
-        LIBRARY DESTINATION ${PYTHON_SITE_INSTALL_DIR}/polymd
+install(TARGETS _polymd 
+        LIBRARY DESTINATION ${HOOMD_INSTALL_PREFIX}/${PYTHON_SITE_INSTALL_DIR}/polymd
         )
 
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
-#set(files __init__.py
-#    )
+MACRO(copy_file file)
+    add_custom_command (
+        OUTPUT ${file}
+        POST_BUILD
+        COMMAND    ${CMAKE_COMMAND}
+        ARGS       -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
+        COMMENT    "Copy hoomd/polymd/${file}"
+    )
+ENDMACRO(copy_file)
 
-#install(FILES ${files}
-#        DESTINATION ${PYTHON_SITE_INSTALL_DIR}/polymd
-#       )
+set(pyfiles __init__.py
+    )
 
-#copy_files_to_build("${files}" "polymd" "*.py")
+install(FILES ${pyfiles}
+        DESTINATION "${HOOMD_INSTALL_PREFIX}/${PYTHON_SITE_INSTALL_DIR}/polymd"
+       )
+
+foreach(file ${pyfiles})
+    copy_file(${file})
+endforeach()
+
+#copy_files_to_build("${pyfiles}" "polymd" "*.py")
 
 # install headers in installation target
-#install(FILES ${_polymd_headers}
-#        DESTINATION ${PYTHON_SITE_INSTALL_DIR}/include/hoomd/polymd
-#       )
+install(FILES ${_polymd_headers}
+        DESTINATION "${HOOMD_INSTALL_PREFIX}/${PYTHON_SITE_INSTALL_DIR}/include/hoomd/polymd"
+       )
 
 add_subdirectory(pair)

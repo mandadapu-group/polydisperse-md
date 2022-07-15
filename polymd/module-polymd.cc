@@ -14,12 +14,12 @@ namespace hoomd
         /*! each class setup their own python exports in a function export_ClassName
             create the hoomd python module and define the exports here.
         */
-            void export_PotentialPairPolydisperse(pybind11::module& m);
-            void export_PotentialPairLJ(pybind11::module& m);
+            //void export_PotentialPairPolydisperse(pybind11::module& m);
+            void export_PotentialPairmLJ(pybind11::module& m);
 
 #ifdef ENABLE_GPU
-            void export_PotentialPairPolydisperse(pybind11::module& m);
-            void export_PotentialPairLJGPU(pybind11::module& m);
+            //void export_PotentialPairPolydisperse(pybind11::module& m);
+            void export_PotentialPairmLJGPU(pybind11::module& m);
 #endif
         } // namespace detail
     } // namespace polymd
@@ -37,12 +37,12 @@ using namespace hoomd::md::detail;
 */
 PYBIND11_MODULE(_polymd, m)
 {
-    export_PotentialPairPolydisperse(m);
-    export_PotentialPairLJ(m);
+    //export_PotentialPairPolydisperse(m);
+    export_PotentialPairmLJ(m);
 
 #ifdef ENABLE_GPU
-    export_PotentialPairPolydisperseGPU(m);
-    export_PotentialPairLJGPU(m);
+    //export_PotentialPairPolydisperseGPU(m);
+    export_PotentialPairmLJGPU(m);
 #endif
 
 }
