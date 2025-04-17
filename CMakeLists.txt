@@ -1,25 +1,29 @@
-project(polymd)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6.2 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.9 FATAL_ERROR)
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH})
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-#SET(CMAKE_INSTALL_RPATH "$ORIGIN/..:$ORIGIN")
+# Name the plugin project.
+project(polymd LANGUAGES C CXX)
 
-include(FindHOOMD.cmake)
+# Find the installed HOOMD.
+find_package(HOOMD REQUIRED)
 
-# plugins must be built as shared libraries
-if (ENABLE_STATIC)
-    message(SEND_ERROR "Plugins cannot be built against a statically compiled hoomd")
-endif (ENABLE_STATIC)
+# Version Check
+if (DEFINED HOOMD_VERSION)
+    message(STATUS "Found HOOMD ${HOOMD_VERSION}: ${HOOMD_INSTALL_PREFIX}/${PYTHON_SITE_INSTALL_DIR}")
 
-set(BUILD_SHARED_LIBS on)
+    if (HOOMD_VERSION VERSION_LESS "4.0.0")
+        message(FATAL_ERROR "HOOMD >= 4.0.0 is required.")
+    elseif (HOOMD_VERSION VERSION_GREATER "6.0.0")
+        message(WARNING "This plugin has not been tested with HOOMD-blue version 6 or higher, and may not function as expected with newer versions.")
+    endif()
+endif()
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${HOOMD_ROOT} CACHE PATH "Installation prefix" FORCE)
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+# Force installation to the HOOMD installation location.
+set(CMAKE_INSTALL_PREFIX ${HOOMD_INSTALL_PREFIX} CACHE PATH "Installation prefix" FORCE)
 
-set(PYTHON_MODULE_BASE_DIR ${CMAKE_INSTALL_PREFIX})
-message(STATUS "Install plugin to: " ${PYTHON_MODULE_BASE_DIR})
+# Enable compiler warnings on gcc and clang.
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result")
+endif()
 
-# add subdirectories
-add_subdirectory(${PROJECT_NAME})
+# Add the component's source directory.
+add_subdirectory(src)
