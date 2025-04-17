@@ -46,8 +46,10 @@ import hoomd
 import hoomd.md as md
 import hoomd.polymd as polymd
 import numpy as np
-from numpy.random import uniform
+from numpy.random import uniform, seed
 import gsd.hoomd
+import os
+import datetime
 
 seed(0)
 simulation = hoomd.Simulation(device = hoomd.device.CPU(notice_level = 2), seed = 0)
@@ -58,15 +60,17 @@ totalsteps = 10/deltat
 snapshots = 1000
 kT = 0.25
 
-# Set up the filename
+# Set up the filename and log period
 temp_gsd_filename = 'MDrun_temp.gsd'
 result_gsd_filename = 'MDrun.gsd'
 log_filename = 'MDrun.log'
+log_print_period = 1000
 
 # Initialize Our Own Configuration using a Snapshot
 rho = 1.00
-LParticles = 64
+LParticles = 32
 NParticles = LParticles**2
+Length = (NParticles / rho) ** 0.5
 dmax = 1.0
 dmin = 0.5
 
@@ -89,6 +93,7 @@ frame.particles.types = ['A']
 frame.configuration.box = [LParticles, LParticles, 0, 0, 0, 0]
 # Because HOOMD v4 or higher does not provide diameter in evaluating potential, we use charge instead of diameter!
 frame.particles.charge = diameter
+simulation.create_state_from_snapshot(frame)
 
 # Define integrator and neighboring list
 integrator = md.Integrator(dt = deltat)
@@ -133,15 +138,19 @@ class Status:
     def etr(self):
         return str(datetime.timedelta(seconds=self.seconds_remaining)).split('.',2)[0]
 
-log_print = 1000
 status_logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 status_logger.add(simulation, quantities=['timestep', 'tps'])
 status = Status(simulation)
 status_logger[('Status', 'etr')] = (status, 'etr', 'string')
-table_status = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=log_print), logger=status_logger)
+table_status = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=log_print_period), logger=status_logger)
 simulation.operations.writers.append(table_status)
 
 # Set up NVT thermostat
+nvt = md.methods.ConstantVolume(filter = hoomd.filter.All(), thermostat=md.methods.thermostats.MTTK(kT = kT, tau = 50*deltat))
+integrator.methods.append(nvt)
+simulation.operations.integrator = integrator
+
+# Run simulation
 with open(log_filename, 'w') as f:
     table = hoomd.write.Table(trigger = trigger, logger = logger, output = f)
     simulation.operations.writers.append(table)
@@ -170,10 +179,10 @@ Note that the pair potential in this plugin is given by:
 \phi(r_{ij} / \sigma_{ij}) = v_0  \left( \frac{\sigma_{ij}}{r_{ij}} \right)^{12} + c_0 + c_2 \left( \frac{r_{ij}}{\sigma_{ij}} \right)^2 + c_4 \left( \frac{r_{ij}}{\sigma_{ij}} \right)^4
 ```
 ```math
-$\sigma_{ij} = 0.5(\sigma_i + \sigma_j)(1 - \epsilon | \sigma_i - \sigma_j|)$,
+\sigma_{ij} = 0.5(\sigma_i + \sigma_j)(1 - \epsilon | \sigma_i - \sigma_j|),
 ```
-where the constants $c_0 = -28 v_0 / \tilde{r}_c^{12}$, $c_2 = 48 v_0 / \tilde{r}_c^{14}$, and $c_4 = -21 v_0 / \tilde{r}_c^{16}$.
+where the constants $c_0 = -28 v_0 / r_c^{12}$, $c_2 = 48 v_0 / r_c^{14}$, and $c_4 = -21 v_0 / r_c^{16}$, with $r_c$ is the cutoff distance, which is same as `scaledr_cut`.
 
 ## **Developer Notes**
 
-To make your own potential, you may need to modify `EvaluatorPairPolydisperse.h` file located in `src` directory. Specifically, you should uopdate the `EvaluatorPairPolydisperse` and `evalForceAndEnergy` functions as needed. If additional variables are required, you can define them as `Scalar` type at the bottom of the header file.
+To make your own potential, you may need to modify `EvaluatorPairPolydisperse.h` file located in `src` directory. Specifically, you should update the `EvaluatorPairPolydisperse` and `evalForceAndEnergy` functions as needed. If additional variables are required, you can define them as `Scalar` type at the bottom of the header file.
