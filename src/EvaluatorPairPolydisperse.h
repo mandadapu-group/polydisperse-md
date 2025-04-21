@@ -182,7 +182,7 @@ class EvaluatorPairPolydisperse
     Scalar eps;
     Scalar scaledr_cut;
 
-    // Additional parameters to be compute from the ones I read
+    // Additional parameters to be compute
     Scalar c0;
     Scalar c1;
     Scalar c2;

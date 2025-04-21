@@ -5,7 +5,6 @@
 # TODO: Document your component.
 
 from . import version
-#from .pair import polymd
 from hoomd.polymd import pair
 
 __all__ = ['polymd']

@@ -181,7 +181,7 @@ Note that the pair potential in this plugin is given by:
 ```math
 \sigma_{ij} = 0.5(\sigma_i + \sigma_j)(1 - \epsilon | \sigma_i - \sigma_j|),
 ```
-where the constants $c_0 = -28 v_0 / r_c^{12}$, $c_2 = 48 v_0 / r_c^{14}$, and $c_4 = -21 v_0 / r_c^{16}$, with $r_c$ is the cutoff distance, which is same as `scaledr_cut`.
+where the constants $c_0 = -28 v_0 / r_c^{12}$, $c_2 = 48 v_0 / r_c^{14}$, and $c_4 = -21 v_0 / r_c^{16}$, with $r_c$ is the cutoff distance, which is the same as `scaledr_cut`.
 
 ## **Developer Notes**
 
