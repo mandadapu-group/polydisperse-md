@@ -23,16 +23,16 @@ The requirements for installing the plugin is the same as standard HOOMD. See [H
 ### Step 2: **Install  Plugin**
 
 The process is similar to installing HOOMD.  First, git clone the project:
-```console
-$ git clone https://github.com/mandadapu-group/polydisperse-md
+```bash
+git clone https://github.com/mandadapu-group/polydisperse-md
 ```
 
 Next, configure your build and install.
-```console
-$ cd polydisperse-md
-$ cmake -B build -S .
-$ cmake --build ./build
-$ cmake --install ./build
+```bash
+cd polydisperse-md
+cmake -B build -S .
+cmake --build ./build
+cmake --install ./build
 ```
 
 In this step, CMake will try to find the usual required packages. However, it will also try to find a HOOMD installation. Check your CMake output! 
@@ -90,7 +90,7 @@ placePolydisperseOnSquare(position, diameter)
 frame.particles.position = position
 frame.particles.typeid = [0] * NParticles
 frame.particles.types = ['A']
-frame.configuration.box = [LParticles, LParticles, 0, 0, 0, 0]
+frame.configuration.box = [Length, Length, 0, 0, 0, 0]
 # Because HOOMD v4 or higher does not provide diameter in evaluating potential, we use charge instead of diameter!
 frame.particles.charge = diameter
 simulation.create_state_from_snapshot(frame)
